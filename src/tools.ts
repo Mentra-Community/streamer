@@ -15,7 +15,9 @@ export async function handleToolCall(toolCall: ToolCall, userId: string, session
     console.log("Tool call parameter values:", toolCall.toolParameters);
   }
 
-  if (toolCall.toolId === "my_tool_name") {
+  if (toolCall.toolId === "start_streaming") {
+    // handle it here
+  } else if (toolCall.toolId === "stop_streaming") {
     // handle it here
   }
 
