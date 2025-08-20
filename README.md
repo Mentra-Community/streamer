@@ -1,4 +1,4 @@
-# MentraOS-Extended-Example-App
+# Mentra Live Streamer App
 
 ### Install MentraOS on your phone
 
@@ -64,26 +64,3 @@ MentraOS install links: [mentra.glass/install](https://mentra.glass/install)
 ### Next Steps
 
 Check out the full documentation at [docs.mentra.glass](https://docs.mentra.glass/core-concepts)
-
-#### Subscribing to events
-
-You can listen for transcriptions, translations, settings updates, and other events within the onSession function.
-
-#### Authenticated Webview
-
-The app can provide an authenticated webview endpoint for users:
-
-- Access the webview at `/webview`
-- Authentication is handled automatically for MentraOS users
-- The current MentraOS user is available at request.authUserId
-- Create a web interface that allows users to interact with your app's functionality
-
-#### Tool Calls
-
-Your app can respond to tool calls via `handleToolCall` in your code:
-
-- Define custom tools that can be called by MentraOS
-- Each tool takes specific parameters and returns a result
-- Tools can perform operations on your application's data
-- Properly handle authentication and validation in your tool implementations
-

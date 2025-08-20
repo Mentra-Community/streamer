@@ -1,4 +1,5 @@
 import { ToolCall, AppSession } from '@mentra/sdk';
+import { broadcastStreamStatus, formatStreamStatus } from './webview';
 
 /**
  * Handle a tool call
@@ -16,9 +17,113 @@ export async function handleToolCall(toolCall: ToolCall, userId: string, session
   }
 
   if (toolCall.toolId === "start_streaming") {
-    // handle it here
+    if (!session) {
+      return "Error: No active session";
+    }
+
+    try {
+      // Get parameters with defaults
+      const platform = (toolCall.toolParameters?.platform as string) || session.streamPlatform || 'here';
+      const streamKey = (toolCall.toolParameters?.streamKey as string) || session.streamKey || '';
+      const customRtmpUrl = (toolCall.toolParameters?.customRtmpUrl as string) || session.customRtmpUrl || '';
+      const useCloudflareManaged = (toolCall.toolParameters?.useCloudflareManaged as boolean) ?? session.useCloudflareManaged ?? true;
+
+      // Save configuration
+      session.streamPlatform = platform as any;
+      session.streamKey = streamKey;
+      session.customRtmpUrl = customRtmpUrl;
+      session.useCloudflareManaged = useCloudflareManaged;
+
+      if (platform === 'here' || useCloudflareManaged) {
+        // Managed stream
+        let options: any = undefined;
+
+        if (platform !== 'here') {
+          let restreamUrl: string | undefined;
+
+          if (platform === 'other') {
+            restreamUrl = customRtmpUrl || undefined;
+          } else {
+            const platformUrls: Record<string, string> = {
+              youtube: 'rtmps://a.rtmps.youtube.com/live2',
+              twitch: 'rtmps://live.twitch.tv/app',
+              instagram: 'rtmps://live-upload.instagram.com:443/rtmp'
+            };
+            const baseUrl = platformUrls[platform];
+            if (baseUrl && streamKey) {
+              restreamUrl = `${baseUrl}/${streamKey}`;
+            }
+          }
+
+          if (restreamUrl) {
+            options = {
+              restreamDestinations: [{
+                url: restreamUrl,
+                name: platform
+              }]
+            };
+            session.restreamDestinations = options.restreamDestinations;
+          }
+        }
+
+        session.camera.startManagedStream(options).then(() => {
+          broadcastStreamStatus(userId, formatStreamStatus(session));
+        });
+        return "Stream started successfully";
+      } else {
+        // Unmanaged stream
+        let rtmpUrl: string | undefined;
+
+        if (platform === 'other') {
+          rtmpUrl = customRtmpUrl;
+        } else {
+          const platformUrls: Record<string, string> = {
+            youtube: 'rtmps://a.rtmps.youtube.com/live2',
+            twitch: 'rtmps://live.twitch.tv/app',
+            instagram: 'rtmps://live-upload.instagram.com:443/rtmp'
+          };
+          const baseUrl = platformUrls[platform];
+          if (baseUrl && streamKey) {
+            rtmpUrl = `${baseUrl}/${streamKey}`;
+          }
+        }
+
+        if (!rtmpUrl) {
+          return "Error: Missing RTMP URL or stream key";
+        }
+
+        session.camera.startStream({ rtmpUrl }).then(() => {
+          broadcastStreamStatus(userId, formatStreamStatus(session));
+        });
+        return "Stream started successfully";
+      }
+    } catch (error: any) {
+      console.error("Error starting stream:", error);
+      return `Error: ${error?.message || error}`;
+    }
   } else if (toolCall.toolId === "stop_streaming") {
-    // handle it here
+    if (!session) {
+      return "Error: No active session";
+    }
+
+    try {
+      if (session.streamType === 'managed') {
+        session.camera.stopManagedStream().then(() => {
+          broadcastStreamStatus(userId, formatStreamStatus(session));
+        });
+      } else if (session.streamType === 'unmanaged') {
+        session.camera.stopStream().then(() => {
+          broadcastStreamStatus(userId, formatStreamStatus(session));
+        });
+      } else {
+        return "No active stream to stop";
+      }
+
+      return "Stream stopped successfully";
+    } catch (error: any) {
+      console.error("Error stopping stream:", error);
+      return `Error: ${error?.message || error}`;
+    }
   }
 
   return undefined;
