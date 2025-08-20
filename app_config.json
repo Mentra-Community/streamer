@@ -1,0 +1,28 @@
+{
+  "description": "A extended example app that shows how to use MentraOS.",
+  "permissions": [
+    {
+      "type": "MICROPHONE",
+      "description": "To show transcriptions"
+    }
+  ],
+  "settings": [
+    {
+      "type": "toggle",
+      "key": "show_live_transcription",
+      "label": "Show live transcription",
+      "defaultValue": true
+    }
+  ],
+  "tools": [
+    {
+      "id": "my_tool_name",
+      "description": "This is a tool that does something.",
+      "activationPhrases": [
+        "my tool name",
+        "use my tool"
+      ],
+      "parameters": { }
+    }
+  ]
+}

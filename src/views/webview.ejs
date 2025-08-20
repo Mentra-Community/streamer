@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MentraOS Example App</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MentraOS Example App</h1>
+        </header>
+        <div class="instructions">
+            <% if (userId) { %>
+                <p>Logged in as: <span class="user-id"><%= userId %></span></p>
+            <% } else { %>
+                <p>Not logged in</p>
+            <% } %>
+        </div>
+    </div>
+</body>
+</html>
