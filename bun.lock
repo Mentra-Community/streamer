@@ -4,7 +4,7 @@
     "": {
       "name": "augmentos-cloud-example-app",
       "dependencies": {
-        "@mentra/sdk": "^2.1.18",
+        "@mentra/sdk": "^2.1.20",
         "ejs": "^3.1.10",
         "express": "^4.21.2",
         "ws": "^8.18.1",
@@ -84,7 +84,7 @@
 
     "@logtail/types": ["@logtail/types@0.5.3", "", {}, "sha512-5uKf1xQ7wRqSW0lYIwDpXdXcFHxPKH5EM22MoEjwTpd8suymOYuEdx9qCCHCYey4uOhPq7x6OkZf86bTO83JsA=="],
 
-    "@mentra/sdk": ["@mentra/sdk@2.1.18", "", { "dependencies": { "@logtail/pino": "^0.5.4", "axios": "^1.8.1", "cookie-parser": "^1.4.7", "dotenv": "^16.4.0", "express": "^4.18.2", "jimp": "^1.6.0", "jsonwebtoken": "^8.5.1", "jsrsasign": "^11.1.0", "multer": "^2.0.1", "pino": "^9.6.0", "pino-pretty": "^13.0.0", "ws": "^8.18.2" } }, "sha512-5502W3x6mRC35S4pDQOsKPFcDkWa3RyplGRUcBAFb9KIxLlblrYJLEdKsIu/9jV2nUi1aKULQpFV9cxU+GzqzA=="],
+    "@mentra/sdk": ["@mentra/sdk@2.1.20", "", { "dependencies": { "@logtail/pino": "^0.5.4", "axios": "^1.8.1", "cookie-parser": "^1.4.7", "dotenv": "^16.4.0", "express": "^4.18.2", "jimp": "^1.6.0", "jsonwebtoken": "^8.5.1", "jsrsasign": "^11.1.0", "multer": "^2.0.1", "pino": "^9.6.0", "pino-pretty": "^13.0.0", "ws": "^8.18.2" } }, "sha512-28196CD2zubpB01HBavM2VUFZ/N9bQD/nFJUMHbwUkmgWSHt32zLcAUHGn3OBxDs+OZ/eBeJ7bjJ4hMEP7HZnQ=="],
 
     "@msgpack/msgpack": ["@msgpack/msgpack@2.8.0", "", {}, "sha512-h9u4u/jiIRKbq25PM+zymTyW6bhTzELvOoUd+AvYriWOAKpLGnIamaET3pnHYoI5iYphAHBI4ayx0MehR+VVPQ=="],
 
