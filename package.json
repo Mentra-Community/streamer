@@ -8,10 +8,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "description": "",
   "dependencies": {
-    "@mentra/sdk": "^2.1.18",
+    "@mentra/sdk": "^2.1.19",
     "ejs": "^3.1.10",
     "express": "^4.21.2",
     "ws": "^8.18.1"
