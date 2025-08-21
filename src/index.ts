@@ -47,6 +47,54 @@ class StreamerApp extends AppServer {
     session.subscribe(StreamType.MANAGED_STREAM_STATUS);
     session.subscribe(StreamType.RTMP_STREAM_STATUS);
 
+    // Check for existing streams and update UI accordingly
+    try {
+      const streamInfo = await session.camera.checkExistingStream();
+
+      if (streamInfo.hasActiveStream && streamInfo.streamInfo) {
+        console.log('Found existing stream:', streamInfo.streamInfo.type);
+
+        if (streamInfo.streamInfo.type === 'managed') {
+          // Managed stream is active - reconnect to it
+          console.log('Reconnecting to existing managed stream...');
+          
+          // The stream is already active, just update our local state
+          session.streamType = 'managed';
+          session.streamStatus = streamInfo.streamInfo.status || 'active';
+          session.hlsUrl = streamInfo.streamInfo.hlsUrl || null;
+          session.dashUrl = streamInfo.streamInfo.dashUrl || null;
+          session.streamId = streamInfo.streamInfo.streamId || null;
+          session.directRtmpUrl = null;
+          session.error = null;
+          session.previewUrl = streamInfo.streamInfo.previewUrl || null;
+
+          // Broadcast the existing stream info
+          broadcastStreamStatus(userId, formatStreamStatus(session));
+
+          // Show notification in glasses
+          session.layouts.showTextWall(`📺 Stream already active!\n\nHLS: ${streamInfo.streamInfo.hlsUrl || 'Generating...'}`);
+        } else {
+          // Unmanaged stream is active
+          session.streamType = 'unmanaged';
+          session.streamStatus = streamInfo.streamInfo.status || 'active';
+          session.hlsUrl = null;
+          session.dashUrl = null;
+          session.streamId = streamInfo.streamInfo.streamId || null;
+          session.directRtmpUrl = streamInfo.streamInfo.rtmpUrl || null;
+          session.error = null;
+
+          // Broadcast the existing stream info
+          broadcastStreamStatus(userId, formatStreamStatus(session));
+
+          // Show notification in glasses
+          session.layouts.showTextWall(`⚠️ Another app is streaming to:\n${streamInfo.streamInfo.rtmpUrl || 'Unknown URL'}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking existing stream:', error);
+      // Continue with normal setup even if check fails
+    }
+
     const statusUnsubscribe = session.camera.onManagedStreamStatus((data) => {
       console.log(data);
       session.streamType = 'managed';

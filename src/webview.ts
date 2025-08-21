@@ -170,10 +170,37 @@ export function setupExpressRoutes(server: AppServer): void {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
-      await req.activeSession.camera.stopManagedStream();
-      broadcastStreamStatus(req.authUserId, formatStreamStatus(req.activeSession));
-      res.json({ ok: true });
+      
+      // First check if there's an existing stream to stop
+      const streamInfo = await req.activeSession.camera.checkExistingStream();
+      
+      if (streamInfo.hasActiveStream && streamInfo.streamInfo?.type === 'managed') {
+        // There is a managed stream, try to stop it
+        await req.activeSession.camera.stopManagedStream();
+        req.activeSession.streamType = null;
+        req.activeSession.streamStatus = 'idle';
+        req.activeSession.hlsUrl = null;
+        req.activeSession.dashUrl = null;
+        req.activeSession.streamId = null;
+        req.activeSession.previewUrl = null;
+        broadcastStreamStatus(req.authUserId, formatStreamStatus(req.activeSession));
+        res.json({ ok: true });
+      } else {
+        // No managed stream found
+        console.log('No managed stream found to stop');
+        req.activeSession.streamType = null;
+        req.activeSession.streamStatus = 'idle';
+        broadcastStreamStatus(req.authUserId, formatStreamStatus(req.activeSession));
+        res.json({ ok: true, message: 'No stream to stop' });
+      }
     } catch (err: any) {
+      console.error('Error stopping managed stream:', err);
+      // Even if stop fails, update UI to reflect no stream
+      if (req.activeSession) {
+        req.activeSession.streamType = null;
+        req.activeSession.streamStatus = 'idle';
+        broadcastStreamStatus(req.authUserId, formatStreamStatus(req.activeSession));
+      }
       res.status(400).json({ ok: false, error: String(err?.message ?? err) });
     }
   });
@@ -212,9 +239,81 @@ export function setupExpressRoutes(server: AppServer): void {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
-      await req.activeSession.camera.stopStream();
-      broadcastStreamStatus(req.authUserId, formatStreamStatus(req.activeSession));
-      res.json({ ok: true });
+      
+      // First check if there's an existing stream to stop
+      const streamInfo = await req.activeSession.camera.checkExistingStream();
+      
+      if (streamInfo.hasActiveStream && streamInfo.streamInfo?.type === 'unmanaged') {
+        // There is an unmanaged stream, try to stop it
+        await req.activeSession.camera.stopStream();
+        req.activeSession.streamType = null;
+        req.activeSession.streamStatus = 'idle';
+        req.activeSession.directRtmpUrl = null;
+        req.activeSession.streamId = null;
+        broadcastStreamStatus(req.authUserId, formatStreamStatus(req.activeSession));
+        res.json({ ok: true });
+      } else {
+        // No unmanaged stream found
+        console.log('No unmanaged stream found to stop');
+        req.activeSession.streamType = null;
+        req.activeSession.streamStatus = 'idle';
+        broadcastStreamStatus(req.authUserId, formatStreamStatus(req.activeSession));
+        res.json({ ok: true, message: 'No stream to stop' });
+      }
+    } catch (err: any) {
+      console.error('Error stopping unmanaged stream:', err);
+      // Even if stop fails, update UI to reflect no stream
+      if (req.activeSession) {
+        req.activeSession.streamType = null;
+        req.activeSession.streamStatus = 'idle';
+        broadcastStreamStatus(req.authUserId, formatStreamStatus(req.activeSession));
+      }
+      res.status(400).json({ ok: false, error: String(err?.message ?? err) });
+    }
+  });
+
+  // API: Check for existing streams
+  app.get('/api/stream/check', async (req: AuthenticatedRequest, res: any) => {
+    try {
+      if (!req.authUserId || !req.activeSession) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      
+      const streamInfo = await (req.activeSession as AppSession).camera.checkExistingStream();
+      
+      if (streamInfo.hasActiveStream && streamInfo.streamInfo) {
+        // Update session state with existing stream info
+        const session = req.activeSession;
+        
+        if (streamInfo.streamInfo.type === 'managed') {
+          session.streamType = 'managed';
+          session.streamStatus = streamInfo.streamInfo.status || 'active';
+          session.hlsUrl = streamInfo.streamInfo.hlsUrl || null;
+          session.dashUrl = streamInfo.streamInfo.dashUrl || null;
+          session.streamId = streamInfo.streamInfo.streamId || null;
+          session.directRtmpUrl = null;
+          session.error = null;
+          session.previewUrl = streamInfo.streamInfo.previewUrl || streamInfo.streamInfo.webrtcUrl || null;
+        } else {
+          session.streamType = 'unmanaged';
+          session.streamStatus = streamInfo.streamInfo.status || 'active';
+          session.hlsUrl = null;
+          session.dashUrl = null;
+          session.streamId = streamInfo.streamInfo.streamId || null;
+          session.directRtmpUrl = streamInfo.streamInfo.rtmpUrl || null;
+          session.error = null;
+        }
+        
+        // Broadcast updated status
+        broadcastStreamStatus(req.authUserId, formatStreamStatus(session));
+      }
+      
+      res.json({
+        ok: true,
+        hasActiveStream: streamInfo.hasActiveStream,
+        streamInfo: streamInfo.streamInfo
+      });
     } catch (err: any) {
       res.status(400).json({ ok: false, error: String(err?.message ?? err) });
     }

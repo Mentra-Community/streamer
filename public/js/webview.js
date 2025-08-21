@@ -261,9 +261,48 @@
         }
     }
 
+    async function checkExistingStream() {
+        try {
+            const response = await fetch('/api/stream/check');
+            const result = await response.json();
+            
+            if (result.ok && result.hasActiveStream && result.streamInfo) {
+                addLog('info', `Found existing ${result.streamInfo.type} stream`);
+                
+                if (result.streamInfo.type === 'managed') {
+                    if (result.streamInfo.hlsUrl) {
+                        addLog('info', `HLS URL: ${result.streamInfo.hlsUrl}`);
+                    }
+                    if (result.streamInfo.activeViewers !== undefined) {
+                        addLog('info', `Active viewers: ${result.streamInfo.activeViewers}`);
+                    }
+                } else {
+                    const rtmpUrl = result.streamInfo.rtmpUrl || 'Unknown URL';
+                    const appId = result.streamInfo.requestingAppId || 'Unknown app';
+                    addLog('warning', `Another app (${appId}) is streaming to: ${rtmpUrl}`);
+                }
+                
+                return result;
+            }
+            
+            return { ok: true, hasActiveStream: false };
+        } catch (error) {
+            console.error('Error checking existing stream:', error);
+            return { ok: false, error: error.message };
+        }
+    }
+
     async function startStream() {
         // Don't start if already in a streaming state
         if (isStreamingStatus(currentStreamStatus)) return;
+
+        // Check for existing streams first
+        const checkResult = await checkExistingStream();
+        if (checkResult.hasActiveStream) {
+            // Stream is already active, SSE will handle the UI update
+            addLog('info', 'Reconnecting to existing stream...');
+            return;
+        }
 
         const useManaged = elements.cloudflareToggle.checked || currentPlatform === 'here';
         streamType = useManaged ? 'managed' : 'unmanaged';
@@ -559,4 +598,12 @@
     // Initialize
     initializeFromData();
     updatePlatformConfig(currentPlatform);
+    
+    // Check for existing streams on page load
+    setTimeout(async () => {
+        const checkResult = await checkExistingStream();
+        if (checkResult.hasActiveStream && checkResult.streamInfo) {
+            addLog('info', 'Existing stream detected on page load');
+        }
+    }, 500);
 })();
