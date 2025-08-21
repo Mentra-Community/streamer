@@ -91,7 +91,8 @@
                statusLower === 'starting' ||
                statusLower === 'pending' ||
                statusLower === 'stopping' ||
-               statusLower === 'disconnecting';
+               statusLower === 'disconnecting' ||
+               statusLower === 'initializing';
     }
 
     function updateStatus(status, type) {
