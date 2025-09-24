@@ -163,9 +163,29 @@ class StreamerApp extends AppServer {
 
   /**
    * Handles stop requests to ensure SSE clients are notified of disconnection
+   * and streams are properly terminated
    */
   protected async onStop(sessionId: string, userId: string, reason: string): Promise<void> {
     try {
+      // Get the session before cleanup to send explicit stream termination commands
+      const session = this.userSessionsMap.get(userId);
+      
+      // Send explicit stream termination commands
+      if (session?.streamType) {
+        try {
+          if (session.streamType === 'managed') {
+            await session.camera.stopManagedStream();
+            console.log('Managed stream terminated on app stop');
+          } else if (session.streamType === 'unmanaged') {
+            await session.camera.stopStream();
+            console.log('Unmanaged stream terminated on app stop');
+          }
+        } catch (streamError) {
+          console.error('Error terminating stream on stop:', streamError);
+          // Continue with cleanup even if stream stop fails
+        }
+      }
+      
       // Ensure base cleanup (disconnects and clears SDK's active session maps)
       await super.onStop(sessionId, userId, reason);
       // Remove any cached session for this user
